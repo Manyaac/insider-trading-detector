@@ -1,0 +1,289 @@
+:root {
+    --primary: #00f7ff;
+    --danger: #ff0066;
+    --warning: #ffcc00;
+    --success: #00cc66;
+    --dark: #0f0f1a;
+    --darker: #080811;
+    --light: #e0e0ff;
+}
+
+body {
+    background: var(--dark);
+    color: var(--light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.user-info {
+    font-size: 0.9rem;
+    color: var(--primary);
+}
+
+h1, h2, h3 {
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+}
+
+form {
+    margin: 20px 0;
+}
+
+input, button {
+    background: var(--darker);
+    color: var(--light);
+    border: 1px solid var(--primary);
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+button {
+    background: #0066ff;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #00a2ff;
+}
+
+/* Alert Severity Colors */
+.alert-card {
+    background: var(--darker);
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+    position: relative;
+}
+
+.alert-card.critical {
+    border-left: 4px solid var(--danger);
+    background-color: rgba(255, 0, 102, 0.1);
+}
+
+.alert-card.high {
+    border-left: 4px solid var(--warning);
+    background-color: rgba(255, 204, 0, 0.1);
+}
+
+.alert-card.medium {
+    border-left: 4px solid #ff9800;
+    background-color: rgba(255, 152, 0, 0.1);
+}
+
+.alert-card.low {
+    border-left: 4px solid var(--success);
+    background-color: rgba(0, 204, 102, 0.1);
+}
+
+/* Severity Badge */
+.severity-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.severity-badge.CRITICAL { background: var(--danger); color: white; }
+.severity-badge.HIGH { background: var(--warning); color: #212529; }
+.severity-badge.MEDIUM { background: #ff9800; color: white; }
+.severity-badge.LOW { background: var(--success); color: white; }
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.alert-date {
+    color: #aaa;
+    font-size: 0.8rem;
+}
+
+.sec-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--primary);
+    text-decoration: none;
+    border: 1px solid var(--primary);
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.sec-link:hover {
+    background: rgba(0, 247, 255, 0.1);
+}
+
+/* Watchlist Styles */
+.watchlist-section {
+    background: rgba(0, 247, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 30px;
+    border: 1px solid rgba(0, 247, 255, 0.1);
+}
+
+.watchlist-items {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.watchlist-items li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(0, 247, 255, 0.05);
+    border-radius: 4px;
+    border: 1px solid rgba(0, 247, 255, 0.1);
+}
+
+.watchlist-items .actions a {
+    margin-left: 10px;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.remove-btn {
+    color: var(--danger);
+    font-weight: bold;
+}
+
+/* Scan Styles */
+.scan-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(0, 247, 255, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 247, 255, 0.1);
+}
+
+.scan-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.stock-info {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(0, 247, 255, 0.05);
+    border-radius: 8px;
+}
+
+/* Add this to make buttons consistent */
+.scan-form button {
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+#tickerInput {
+    min-width: 200px;
+}
+
+.current-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.price-change {
+    margin-left: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.positive {
+    background: rgba(0, 204, 102, 0.2);
+    color: #00cc66;
+}
+
+.negative {
+    background: rgba(255, 0, 102, 0.2);
+    color: #ff0066;
+}
+
+.chart-btn {
+    padding: 8px 15px;
+    background: var(--primary);
+    color: var(--dark);
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.chart-btn:hover {
+    background: rgba(0, 247, 255, 0.8);
+    text-decoration: none;
+}
+
+.chart-container {
+    width: 98%;
+    min-height: 500px;
+    position: relative;
+    margin-left: 20px;
+    margin-right: 20px;
+    overflow: visible;
+}
+
+canvas {
+    width: 100%!important;
+    height: 100%!important;
+}
+
+.no-data-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff0066;
+    font-weight: bold;
+}
+
+/* Impact score colors */
+.impact-score {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.impact-7, .impact-8, .impact-9, .impact-10 {
+    background: linear-gradient(135deg, var(--danger), var(--warning));
+}
+
+.impact-4, .impact-5, .impact-6 {
+    background: linear-gradient(135deg, var(--warning), var(--success));
+}
+
+.impact-1, .impact-2, .impact-3 {
+    background: var(--success);
+}

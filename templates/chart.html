@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ticker }} Price Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="chart-container">
+        <h2 class="chart-title">{{ ticker }} Price History (1 Month)</h2>
+
+        {% if not dates %}
+        <div class="no-data-message">
+            No historical data available for {{ ticker }}
+        </div>
+        {% endif %}
+
+        <canvas id="stockChart"></canvas>
+        
+        <div class="chart-explanation">
+            <h3>Understanding This Chart</h3>
+            <p>
+                The blue line shows the stock's closing price over the past month. 
+                Red markers indicate days with insider trading activity - larger markers 
+                represent more significant trades. Look for unusual price movements 
+                around these dates as they may indicate market-moving insider activity.
+            </p>
+        </div>
+        
+        <div class="stock-info">
+            <h3>{{ info.get('shortName', ticker) }} ({{ ticker }})</h3>
+            <p>Sector: {{ info.get('sector', 'N/A') }} | Industry: {{ info.get('industry', 'N/A') }}</p>
+            <div class="price-info">
+                <span class="current-price">${{ "%.2f"|format(info.get('currentPrice', 0)) }}</span>
+                <span class="price-change {{ 'positive' if info.get('regularMarketChangePercent', 0) >= 0 else 'negative' }}">
+                    {{ "%.2f"|format(info.get('regularMarketChangePercent', 0)) }}%
+                </span>
+            </div>
+            <p>52-Week Range: ${{ "%.2f"|format(info.get('fiftyTwoWeekLow', 0)) }} - ${{ "%.2f"|format(info.get('fiftyTwoWeekHigh', 0)) }}</p>
+        </div>
+        
+        <a href="{{ url_for('index') }}" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <script>
+    const dates = JSON.parse('{{ dates | tojson | safe }}') || [];
+    const prices = JSON.parse('{{ prices | tojson | safe }}') || [];
+    const insiderDates = JSON.parse('{{ insider_dates | tojson | safe }}') || [];
+
+    if (dates.length && prices.length) {
+        const ctx = document.getElementById('stockChart').getContext('2d');
+
+        const maxPrice = Math.max(...prices);
+        const minPrice = Math.min(...prices);
+        const precision = (maxPrice - minPrice) < 10 ? 2 : 0;
+
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels:  dates.map(date => date.slice(5)),
+                datasets: [{
+                    label: 'Price (USD)',
+                    data: prices,
+                    borderColor: '#00f7ff',
+                    backgroundColor: 'rgba(0, 247, 255, 0.2)',
+                    borderWidth: 2,
+                    pointRadius: dates.map(date => insiderDates.includes(date) ? 6 : 3),
+                    pointBackgroundColor: dates.map(date => insiderDates.includes(date) ? '#ff0066' : '#00f7ff'),
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                layout: {
+                    padding: {
+                        left: 20, // More space for Y-axis
+                        right: 20
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return value % 1 === 0 ? `$${value}` : `$${value.toFixed(precision)}`;
+                            },
+                            color: '#ffffff', // White text for visibility
+                            font: {
+                                size: 12
+                            },
+                            mirror: false, // Draw ticks on opposite side too
+                            padding: 4
+                        },
+                        
+                        grid: {
+                            color: 'rgba(255,255,255,0.1)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Price (USD)',
+                            
+                            color: '#ffffff'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#ffffff'
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.1)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    // Use Chart.js for heatmap visualization
+    function createHeatmap(alerts) {
+    const ctx = document.getElementById('heatmap').getContext('2d');
+    new Chart(ctx, {
+        type: 'matrix',
+        data: {
+        datasets: [{
+            label: 'Trades',
+            data: alerts.map(a => ({
+            x: a.ticker,
+            y: a.insider,
+            v: a.impact_score
+            })),
+            backgroundColor: ({raw}) => {
+            const v = raw.v;
+            return v > 7 ? '#ff2b2b' : 
+                    v > 5 ? '#ff8000' :
+                    v > 3 ? '#ffcc00' : '#36ab00';
+            },
+            width: ({chart}) => (chart.chartArea.width / 20),
+            height: ({chart}) => (chart.chartArea.height / 20)
+        }]
+        },
+        options: {
+        plugins: {
+            tooltip: {
+            callbacks: {
+                label: (ctx) => {
+                const a = alerts[ctx.dataIndex];
+                return [
+                    `Type: ${a.transaction_type}`,
+                    `Amount: $${a.transaction_amount?.toLocaleString() || 'N/A'}`,
+                    `Date: ${a.date}`
+                ];
+                }
+            }
+            }
+        }
+        }
+    });
+    }
+
+</script>
+</body>
+</html>
