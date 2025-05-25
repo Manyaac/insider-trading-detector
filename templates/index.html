@@ -3,483 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insider Trading Detector</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Insider Trading Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
     <style>
-        :root {
-            --primary: #00f7ff;
-            --primary-dark: #00c4cc;
-            --danger: #ff0066;
-            --danger-dark: #cc0052;
-            --success: #00ffaa;
-            --success-dark: #00cc88;
-            --warning: #ff8c00;
-            --bg-dark: #0f172a;
-            --bg-darker: #0a101f;
-            --bg-card: #1e293b;
-            --bg-card-hover: #23304d;
-            --text-light: #e2e8f0;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            line-height: 1.6;
-            padding: 20px;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-        
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        h1, h2, h3, h4 {
-            color: var(--primary);
-            margin-bottom: 15px;
-        }
-        
-        h1 {
-            font-size: 2rem;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        h2 {
-            font-size: 1.5rem;
-            margin-top: 30px;
-        }
-        
-        h3 {
-            font-size: 1.3rem;
-        }
-        
-        .user-info {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-        
-        a {
-            color: var(--primary);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        
-        a:hover {
-            color: var(--primary-dark);
-            text-decoration: underline;
-        }
-        
-        /* Alert Cards */
-        .alert-card {
-            background: var(--bg-card);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-left: 4px solid var(--danger);
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .alert-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(255, 0, 102, 0.2);
-            background: var(--bg-card-hover);
-        }
-        
-        .alert-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .alert-header h4 {
-            margin: 0;
-            font-size: 1.1rem;
-            color: var(--text-light);
-        }
-        
-        .impact-score {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--danger), var(--warning));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            font-size: 0.9rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        .alert-card p {
-            margin: 8px 0;
-            color: var(--text-light);
-        }
-        
-        .alert-card strong {
-            color: var(--primary);
-        }
-        
-        /* Progress Bar */
-        .progress-container {
-            margin: 15px 0;
-        }
-        
-        .progress-bar {
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            border-radius: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--success));
-            transition: width 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
-            box-shadow: 0 0 8px rgba(0, 247, 255, 0.4);
-        }
-        
-        .progress-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-        }
-        
-        /* Alert Footer */
-        .alert-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 15px;
-            font-size: 0.9rem;
-        }
-        
-        .severity {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: bold;
-            padding: 3px 8px;
-            border-radius: 4px;
-        }
-        
-        .severity-high {
-            color: var(--danger);
-            background-color: rgba(255, 0, 102, 0.1);
-        }
-        
-        .severity-medium {
-            color: var(--warning);
-            background-color: rgba(255, 140, 0, 0.1);
-        }
-        
-        .severity-low {
-            color: var(--success);
-            background-color: rgba(0, 255, 170, 0.1);
-        }
-        
-        .view-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            color: var(--primary);
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-        
-        .view-link:hover {
-            background: rgba(0, 247, 255, 0.1);
-            text-decoration: none;
-        }
-        
-        /* Forms and Buttons */
-        .scan-section, .watchlist-section {
-            background: var(--bg-card);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        input[type="text"] {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            background: var(--bg-darker);
-            color: var(--text-light);
-            font-size: 1rem;
-        }
-        
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            background: var(--primary);
-            color: var(--bg-dark);
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        button:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-        
-        button[type="button"] {
-            background: var(--bg-card);
-            color: var(--primary);
-            border: 1px solid var(--primary);
-        }
-        
-        button[type="button"]:hover {
-            background: rgba(0, 247, 255, 0.1);
-        }
-        
-        /* Watchlist */
-        .watchlist-items {
-            list-style: none;
-        }
-        
-        .watchlist-items li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 15px;
-            background: var(--bg-darker);
-            border-radius: 4px;
-            margin-bottom: 8px;
-        }
-        
-        .ticker {
-            font-weight: bold;
-            color: var(--primary);
-        }
-        
-        .actions {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .actions a {
-            color: var(--text-muted);
-            transition: all 0.2s;
-        }
-        
-        .actions a:hover {
-            color: var(--primary);
-            transform: scale(1.1);
-        }
-        
-        .remove-btn {
-            color: var(--danger) !important;
-        }
-        
-        /* Flash Messages */
-        .alert {
-            padding: 12px 20px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-        
-        .alert-success {
-            background: rgba(0, 255, 170, 0.1);
-            color: var(--success);
-            border-left: 4px solid var(--success);
-        }
-        
-        .alert-danger {
-            background: rgba(255, 0, 102, 0.1);
-            color: var(--danger);
-            border-left: 4px solid var(--danger);
-        }
-        
-        .alert-info {
-            background: rgba(0, 247, 255, 0.1);
-            color: var(--primary);
-            border-left: 4px solid var(--primary);
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            form {
-                flex-direction: column;
-            }
-            
-            .alert-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-            
-            .impact-score {
-                align-self: flex-end;
-            }
-        }
+        .impact-HIGH { background-color: #ffdddd !important; }
+        .impact-MEDIUM { background-color: #fff3cd !important; }
+        .badge { font-size: 0.9em; }
+        #lastUpdated { font-size: 0.8em; }
+        .table-responsive { overflow-x: auto; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><i class="fas fa-chart-line"></i> Insider Trading Alerts</h1>
-            <div class="user-info">
-                Logged in as <strong>{{ current_user.username }}</strong> | 
-                <a href="{{ url_for('logout') }}">Logout</a>
+    <div class="container py-4">
+        <h1 class="mb-4 text-center">🔍 Insider Trading Monitor</h1>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Form 4 Filings</h5>
+                <small id="lastUpdated" class="text-muted">Loading...</small>
             </div>
-        </header>
-
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tradesTable" class="table table-hover table-striped w-100">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Issuer</th>
+                                <th>Insider</th>
+                                <th>Transaction</th>
+                                <th>Shares</th>
+                                <th>Value ($)</th>
+                                <th>Date</th>
+                                <th>Impact</th>
+                                <th>Filing</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Scan Form -->
-        <div class="scan-section">
-            <h3>Scan for Insider Activity</h3>
-            <form method="POST" action="{{ url_for('scan') }}">
-                <input type="text" name="ticker" id="tickerInput" placeholder="Enter ticker (e.g. AAPL)" required>
-                <button type="submit"><i class="fas fa-search"></i> Scan</button>
-                <button type="button" onclick="viewChart()"><i class="fas fa-chart-bar"></i> View Chart</button>
-            </form>
-
-            <script>
-            function viewChart() {
-                const ticker = document.getElementById('tickerInput').value;
-                if (ticker) {
-                    window.location.href = `/chart/${encodeURIComponent(ticker)}`;
-                } else {
-                    alert("Please enter a ticker symbol");
-                }
-            }
-            </script>
-        </div>
-
-        <!-- Watchlist -->
-        <div class="watchlist-section">
-            <h3>Your Watchlist</h3>
-            <form method="POST" action="{{ url_for('add_to_watchlist') }}">
-                <input type="text" name="ticker" placeholder="e.g. AAPL" required>
-                <button type="submit"><i class="fas fa-plus"></i> Add</button>
-            </form>
-            <ul class="watchlist-items">
-                {% for item in current_user.watchlist %}
-                <li>
-                    <span class="ticker">{{ item.ticker }}</span>
-                    <div class="actions">
-                        <a href="{{ url_for('chart', ticker=item.ticker) }}" title="View Chart"><i class="fas fa-chart-line"></i></a>
-                        <a href="{{ url_for('scan') }}?ticker={{ item.ticker }}" title="Scan"><i class="fas fa-search"></i></a>
-                        <a href="{{ url_for('remove_from_watchlist', id=item.id) }}" class="remove-btn" title="Remove"><i class="fas fa-times"></i></a>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- Alerts Section -->
-        <div class="alerts-container">
-            <h2><i class="fas fa-bell"></i> Recent Alerts</h2>
-            {% if alerts %}
-                {% for alert in alerts %}
-                <!-- NEW VERSION - PASTE THIS EXACTLY -->
-                <div class="alert-card">
-                    <div class="alert-header">
-                        <h4>{{ alert.ticker }} | SEC Form {{ alert.formType }}</h4>
-                        <div class="impact-score impact-{{ alert.impact_score }}">
-                            {{ alert.impact_score }}/10
-                        </div>
-                    </div>
-                    
-                    <div class="alert-details">
-                        <p><strong>Issuer:</strong> {{ alert.issuer or "N/A" }}</p>
-                        <p><strong>Insider:</strong> {{ alert.insider or "N/A" }}</p>
-                        <p><strong>Transaction:</strong> {{ alert.transaction or "N/A" }}</p>
-                        <p><strong>Reason:</strong> {{ alert.reason }}</p>
-                    </div>
-                    
-                    <div class="progress-container">
-                        <div class="progress-labels">
-                            <span>Impact</span>
-                            <span>{{ alert.impact_score }}/10</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" data-score="{{ alert.impact_score }}"></div>
-                        </div>
-
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            document.querySelectorAll('.progress-fill').forEach(el => {
-                                el.style.width = `${el.dataset.score * 10}%`;
-                            });
-                        });
-                        </script>
-                    </div>
-                    
-                    <div class="alert-footer">
-                        <span class="severity severity-{{ alert.severity|lower }}">
-                            <i class="fas fa-flag"></i> {{ alert.severity }}
-                        </span>
-                        <a href="{{ alert.link }}" target="_blank" class="view-link">
-                            View Filing <i class="fas fa-external-link-alt"></i>
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="alert-card" style="text-align: center; border-left-color: var(--text-muted);">
-                    <p>No alerts found. Scan a stock to detect insider activity.</p>
-                </div>
-            {% endif %}
+            </div>
         </div>
     </div>
+
+    {% extends "base.html" %}
+
+    {% block title %}Insider Trades Dashboard{% endblock %}
+
+    {% block content %}
+    <div class="container py-4">
+        <h1 class="mb-4 text-center">🔍 Insider Trading Monitor</h1>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Form 4 Filings</h5>
+                <small id="lastUpdated" class="text-muted">Loading...</small>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="tradesTable" class="table table-hover table-striped w-100">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Issuer</th>
+                                <th>Insider</th>
+                                <th>Transaction</th>
+                                <th>Shares</th>
+                                <th>Value ($)</th>
+                                <th>Date</th>
+                                <th>Impact</th>
+                                <th>Filing</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block scripts %}
+
+
+    <!-- DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#tradesTable').DataTable({
+                ajax: {
+                    url: '/api/trades',
+                    dataSrc: 'data',
+                    error: function(xhr, error, thrown) {
+                        console.error('AJAX Error:', xhr.responseJSON);
+                        alert('Failed to load data. Please refresh the page.');
+                    }
+                },
+                columns: [
+                    { data: 'symbol' },
+                    { data: 'issuer' },
+                    { data: 'insider' },
+                    { data: 'transaction' },
+                    { 
+                        data: 'shares',
+                        render: $.fn.dataTable.render.number(',')
+                    },
+                    { 
+                        data: 'value',
+                        render: function(data) {
+                            return '$' + $.fn.dataTable.render.number(',', '.', 2).display(data);
+                        }
+                    },
+                    { data: 'date' },
+                    { 
+                        data: 'impact',
+                        render: function(data) {
+                            const cls = data.includes('HIGH') ? 'danger' : 
+                                    data.includes('MEDIUM') ? 'warning' : 'success';
+                            return `<span class="badge bg-${cls}">${data}</span>`;
+                        }
+                    },
+                    {
+                        data: 'filing_url',
+                        render: function(data) {
+                            return data ? `<a href="${data}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>` : 'N/A';
+                        }
+                    }
+                ],
+                responsive: true,
+                serverSide: false,
+                processing: true
+            });
+        });
+    </script>
+    {% endblock %}
+    
 </body>
 </html>

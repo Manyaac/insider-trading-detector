@@ -1,0 +1,77 @@
+/* Global Variables */
+:root {
+  --primary: #6e48aa;
+  --secondary: #9d50bb;
+  --dark: #121212;
+  --darker: #0a0a0a;
+  --light: #e0e0e0;
+  --lighter: #f5f5f5;
+  --danger: #ff4d4d;
+  --success: #4CAF50;
+}
+
+/* Base Styles */
+body {
+  background-color: var(--darker);
+  color: var(--light);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Table Styles */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.impact-HIGH { 
+  background-color: #ffdddd !important; 
+}
+
+.impact-MEDIUM { 
+  background-color: #fff3cd !important; 
+}
+
+.badge { 
+  font-size: 0.9em; 
+}
+
+/* Utility Classes */
+.text-muted {
+  opacity: 0.7;
+}
+
+.shadow {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Dashboard Specific Styles */
+.last-updated {
+    font-size: 0.85rem;
+    font-weight: normal;
+}
+
+.card-header h5 {
+    font-size: 1.1rem;
+}
+
+.summary-widget {
+    background: rgba(30, 30, 30, 0.7);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.widget-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.widget-label {
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
