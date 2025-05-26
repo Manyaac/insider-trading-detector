@@ -440,10 +440,25 @@
                     </div>
                     
                     <div class="alert-details">
-                        <p><strong>Issuer:</strong> {{ alert.issuer or "N/A" }}</p>
-                        <p><strong>Insider:</strong> {{ alert.insider or "N/A" }}</p>
-                        <p><strong>Transaction:</strong> {{ alert.transaction or "N/A" }}</p>
-                        <p><strong>Reason:</strong> {{ alert.reason }}</p>
+                        {% if alert.issuer %}
+                        <p><strong>Issuer:</strong> {{ alert.issuer }}</p>
+                        {% endif %}
+                        
+                        {% if alert.insider %}
+                        <p><strong>Insider:</strong> {{ alert.insider }}</p>
+                        {% endif %}
+                        
+                        {% if alert.transaction %}
+                        <p><strong>Transaction:</strong> {{ alert.transaction }}</p>
+                        {% endif %}
+                        
+                        <p><strong>Reason:</strong> 
+                            {% if alert.form_type == '4' and alert.transaction %}
+                                SEC {{ alert.form_type }}: {{ alert.transaction }}
+                            {% else %}
+                                {{ alert.reason }}
+                            {% endif %}
+                        </p>
                     </div>
                     
                     <div class="progress-container">

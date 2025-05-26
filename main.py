@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory,  get_flashed_messages
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory, get_flashed_messages
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
@@ -10,9 +10,14 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import requests
+import re
 from bs4 import BeautifulSoup
 from sec_api import QueryApi
 from dotenv import load_dotenv
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 
 # Load environment variables
 load_dotenv()
@@ -25,18 +30,18 @@ app.secret_key = '2424'  # Your SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Manya@localhost:5432/insiderdb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Email configuration
+# Email configuration - FIXED: Correct environment variable names
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'vinishkamanya24@gmail.com'
-app.config['MAIL_PASSWORD'] = 'nztjeizglffxepbb'
+app.config['MAIL_USERNAME'] = 'vinishkamanya24@gmail.com'  # Direct email (or use os.getenv('GMAIL_USERNAME'))
+app.config['MAIL_PASSWORD'] = 'nztjeizglffxepbb'  # Direct app password (or use os.getenv('GMAIL_APP_PASSWORD'))
 app.config['MAIL_DEFAULT_SENDER'] = 'vinishkamanya24@gmail.com'
+mail = Mail(app) 
 
 # Initialize extensions
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-mail = Mail(app)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -80,7 +85,6 @@ class Alert(db.Model):
 # Auth setup
 @login_manager.unauthorized_handler
 def unauthorized():
-    # Only flash once if needed
     if not any(m.startswith('Please log in') for m in get_flashed_messages()):
         flash('Please log in to access this page', 'info')
     return redirect(url_for('login'))
@@ -112,20 +116,38 @@ def get_insider_trades(ticker):
         return []
 
 def send_alert_email(user, alert):
+    if not user or not user.email:
+        print("No valid user/email provided")
+        return False
+
     try:
-        msg = Message(
-            subject=f"🚨 Insider Alert: {alert.ticker}",
-            recipients=[user.email],
-            html=render_template(
-                "email_alert.html",
-                alert=alert,
-                user=user
-            )
-        )
-        mail.send(msg)
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = app.config['MAIL_USERNAME']
+        msg['To'] = user.email
+        msg['Subject'] = f"🚨 Insider Alert: {alert.ticker}"
+        
+        # Create HTML content
+        html = f"""
+        <h1>New Alert for {alert.ticker}</h1>
+        <p><strong>Date:</strong> {alert.date.strftime('%Y-%m-%d')}</p>
+        <p><strong>Reason:</strong> {alert.reason}</p>
+        <p><strong>Severity:</strong> {alert.severity}</p>
+        """
+        
+        msg.attach(MIMEText(html, 'html'))
+        
+        # Connect to SMTP server and send
+        with smtplib.SMTP(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
+            server.starttls()
+            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+            server.send_message(msg)
+        
+        print(f"Email successfully sent to {user.email}")
         return True
+        
     except Exception as e:
-        print(f"Email failed: {str(e)}")
+        print(f"SMTP Error: {str(e)}")
         return False
 
 def extract_filing_details(link):
@@ -133,32 +155,27 @@ def extract_filing_details(link):
         response = requests.get(link, timeout=10)
         text = response.text.replace('\n', ' ')
         
-        issuer = text.split('<issuerName>')[1].split('</issuerName>')[0][:100] if '<issuerName>' in text else "N/A"
-        insider = text.split('<rptOwnerName>')[1].split('</rptOwnerName>')[0][:100] if '<rptOwnerName>' in text else "N/A"
+        issuer = text.split('<issuerName>')[1].split('</issuerName>')[0][:100] if '<issuerName>' in text else ""
+        insider = text.split('<rptOwnerName>')[1].split('</rptOwnerName>')[0][:100] if '<rptOwnerName>' in text else ""
         
-        transaction = "N/A"
+        transaction = ""
         if '<transactionShares>' in text:
             shares = text.split('<transactionShares>')[1].split('</transactionShares>')[0]
             price = text.split('<transactionPricePerShare>')[1].split('</transactionPricePerShare>')[0] if '<transactionPricePerShare>' in text else ""
             transaction = f"{shares} shares @ {price}" if price else f"{shares} shares"
         
-        impact_score = 5
-        if "sale" in transaction.lower(): impact_score += 3
-        if "purchase" in transaction.lower(): impact_score += 1
-        impact_score = max(1, min(10, impact_score))
-
         return {
             "issuer": issuer,
             "insider": insider,
             "transaction": transaction,
-            "impact_score": impact_score
+            "impact_score": 5  # Default score
         }
     except Exception as e:
         print(f"Failed to parse filing: {e}")
         return {
-            "issuer": "N/A",
-            "insider": "N/A",
-            "transaction": "N/A",
+            "issuer": "",
+            "insider": "",
+            "transaction": "",
             "impact_score": 5
         }
 
@@ -273,102 +290,117 @@ def chart(ticker):
 @login_required
 def scan():
     ticker = request.form.get('ticker', '').upper()
-    if not ticker:
-        flash('Please enter a valid ticker symbol', 'danger')
+    if not ticker or len(ticker) > 5:
+        flash('Please enter a valid ticker symbol (1-5 characters)', 'danger')
         return redirect(url_for('index'))
 
     alerts_created = 0
-    
+    email_success = 0
+    email_failures = 0
+
     try:
-        stock = yf.Ticker(ticker)
-        data = stock.history(period="1mo", auto_adjust=True, timeout=10)
-        if data.empty:
-            data = stock.history(period='1mo', interval='1d')
-        
-        if data.empty:
-            flash(f"No data found for {ticker}", 'warning')
-            return redirect(url_for('index'))
+        # Part 1: Check for unusual volume
+        try:
+            stock = yf.Ticker(ticker)
+            hist = stock.history(period='10d', interval='1d')
+            
+            if not hist.empty:
+                hist['zscore'] = (hist['Volume'] - hist['Volume'].mean()) / hist['Volume'].std()
+                
+                for date, row in hist[hist['zscore'] > 2].iterrows():
+                    alert = Alert(
+                        ticker=ticker,
+                        date=date.to_pydatetime(),
+                        reason=f"Unusual trading volume (Z-score: {row['zscore']:.1f})",
+                        severity="HIGH",
+                        user_id=current_user.id,
+                        issuer=None,
+                        insider=None,
+                        transaction=None
+                    )
+                    db.session.add(alert)
+                    alerts_created += 1
+                    
+                    # Send email
+                    if send_alert_email(current_user, alert):
+                        email_success += 1
+                    else:
+                        email_failures += 1
+        except Exception as e:
+            print(f"Volume analysis failed for {ticker}: {str(e)}")
 
-        # Volume anomalies
-        data['Z-Score'] = (data['Volume'] - data['Volume'].mean()) / data['Volume'].std()
-        anomalies = data[data['Z-Score'] > 2]
-        
-        # Insider trades
-        insider_trades = get_insider_trades(ticker)
-        
-        # Create alerts
-        for date, row in anomalies.iterrows():
-            try:
-                alert = Alert(
-                    ticker=ticker,
-                    date=date.to_pydatetime(),
-                    reason=f"Abnormal volume spike (Z-Score: {float(row['Z-Score']):.2f})",
-                    severity="HIGH",
-                    user_id=current_user.id
-                )
-                db.session.add(alert)
-                alerts_created += 1
-                if current_user.email:
-                    send_alert_email(current_user, alert)
-            except Exception as e:
-                print(f"Error creating volume alert: {e}")
-                continue
-
-        for trade in insider_trades:
-            try:
-                filing_details = extract_filing_details(trade["link"])
+        # Part 2: Check SEC filings
+        try:
+            for filing in get_insider_trades(ticker):
+                details = extract_filing_details(filing['link'])
+                
+                # Build the reason string conditionally
+                reason = f"SEC {filing['formType']}"
+                if details['transaction']:
+                    reason += f": {details['transaction']}"
                 
                 alert = Alert(
-                    ticker=trade["ticker"],
-                    date=datetime.strptime(trade["filedAt"], '%Y-%m-%d'),
-                    reason=f"SEC {trade['formType']}: {filing_details['transaction'] or 'No details'}",
-                    severity="HIGH" if "sale" in filing_details['transaction'].lower() else "MEDIUM",
+                    ticker=filing['ticker'],
+                    date=datetime.strptime(filing['filedAt'], '%Y-%m-%d'),
+                    reason=reason,
+                    severity="HIGH" if "sale" in details['transaction'].lower() else "MEDIUM",
                     user_id=current_user.id,
-                    link=trade["link"],
-                    form_type=trade["formType"],
-                    issuer=filing_details['issuer'],
-                    insider=filing_details['insider'],
-                    transaction=filing_details['transaction'],
-                    impact_score=filing_details['impact_score']
+                    link=filing['link'],
+                    form_type=filing['formType'],
+                    issuer=details['issuer'] if details['issuer'] else None,
+                    insider=details['insider'] if details['insider'] else None,
+                    transaction=details['transaction'] if details['transaction'] else None,
+                    impact_score=details['impact_score']
                 )
                 db.session.add(alert)
                 alerts_created += 1
-                if current_user.email:
-                    send_alert_email(current_user, alert)
-                    
-            except Exception as e:
-                print(f"Failed to process filing: {e}")
-                continue
-
-            if success:
-                return redirect(url_for('index', scan=1))
-            else:
-                return redirect(url_for('index'))
-
+                
+                # Send email
+                if send_alert_email(current_user, alert):
+                    email_success += 1
+                else:
+                    email_failures += 1
+        except Exception as e:
+            print(f"SEC analysis failed for {ticker}: {str(e)}")
 
         db.session.commit()
-        flash(f"Scan complete. Found {alerts_created} alerts for {ticker}", 'success')
-        return redirect(url_for('index', scan=1))
         
+        # Show results to user
+        if alerts_created == 0:
+            flash(f"No alerts found for {ticker}", 'info')
+        elif email_failures > 0:
+            flash(
+                f"Found {alerts_created} alerts ({email_success} emails sent, {email_failures} failed)", 
+                'warning'
+            )
+        else:
+            flash(f"Found {alerts_created} alerts ({email_success} emails sent)", 'success')
+            
     except Exception as e:
         db.session.rollback()
-        flash(f"Error scanning {ticker}: {str(e)}", 'danger')
-        return redirect(url_for('index'))
-
-
-@app.route('/get-price-data/<ticker>')
-@login_required
-def get_price_data(ticker):
-    try:
-        stock = yf.Ticker(ticker)
-        hist = stock.history(period='1mo', interval='1d')
-        return jsonify({
-            'dates': hist.index.strftime('%Y-%m-%d').tolist(),
-            'prices': hist['Close'].fillna(method='ffill').tolist()
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        flash(f"Scan failed: {str(e)}", 'danger')
     
+    return redirect(url_for('index'))
+        
+
+@app.route('/test-email')
+@login_required
+def test_email():
+    """Test endpoint for email functionality"""
+    test_alert = Alert(
+        ticker="TEST",
+        date=datetime.utcnow(),
+        reason="This is a test alert",
+        severity="HIGH",
+        user_id=current_user.id
+    )
+    success = send_alert_email(current_user, test_alert)
+    return jsonify({
+        "success": success,
+        "message": "Test email sent" if success else "Failed to send test email",
+        "recipient": current_user.email
+    })
+
 
 @app.route('/favicon.ico')
 def favicon():

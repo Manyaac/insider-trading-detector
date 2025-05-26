@@ -71,23 +71,21 @@
         </div>
         
         <div class="content">
-            <p>Hello {{ user.username }},</p>
-            <p>We've detected new insider trading activity that matches your watchlist:</p>
+            {% if alert.issuer %}
+            <p><strong>Issuer:</strong> {{ alert.issuer }}</p>
+            {% endif %}
             
-            <div class="alert-card">
-                <h2 class="alert-title">{{ alert.ticker }} - {{ alert.issuer }}</h2>
-                
-                <div class="details">
-                    <p><strong>Insider:</strong> {{ alert.insider }}</p>
-                    <p><strong>Transaction:</strong> {{ alert.transaction }}</p>
-                    <p><strong>Date:</strong> {{ alert.date.strftime('%Y-%m-%d') }}</p>
-                    <p><strong>Severity:</strong> {{ alert.severity }}</p>
-                </div>
-                
-                <a href="{{ alert.link }}" class="button" target="_blank">View SEC Filing</a>
-            </div>
+            {% if alert.insider %}
+            <p><strong>Insider:</strong> {{ alert.insider }}</p>
+            {% endif %}
             
-            <p>This alert was generated because the activity matches your watchlist criteria.</p>
+            <p><strong>Details:</strong> 
+                {% if alert.form_type == '4' and alert.transaction %}
+                    SEC {{ alert.form_type }} filing: {{ alert.transaction }}
+                {% else %}
+                    {{ alert.reason }}
+                {% endif %}
+            </p>
         </div>
         
         <div class="footer">
