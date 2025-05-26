@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - InsiderTracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <style>
+        :root {
+            --primary: #00f7ff;
+            --primary-dark: #00c4cc;
+            --danger: #ff0066;
+            --warning: #ffcc00;
+            --success: #00cc66;
+            --bg-dark: #0f172a;
+            --bg-darker: #0a101f;
+            --bg-card: #1e293b;
+            --text-dark: #0a0a1a;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .background-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            opacity: 0.1;
+        }
+        
+        .login-container {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            z-index: 2;
+            position: relative;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(5px);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .logo h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 2.2rem;
+            text-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+            letter-spacing: 1px;
+        }
+        
+        .logo p {
+            color: var(--text-muted);
+            margin-top: 10px;
+            font-size: 1rem;
+        }
+        
+        .logo::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--primary);
+            margin: 15px auto;
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(0, 247, 255, 0.5);
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .alert-danger {
+            background: rgba(255, 0, 102, 0.2);
+            border-left: 4px solid var(--danger);
+        }
+        
+        .alert-info {
+            background: rgba(0, 204, 102, 0.2);
+            border-left: 4px solid var(--success);
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 15px;
+            background: var(--bg-darker);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 247, 255, 0.2);
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 220, 220, 0.9); /* Slightly less intense cyan */
+            color: #0a0a1a !important; /* Much darker text for perfect contrast */
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            text-shadow: none; /* Remove any text effects that reduce readability */
+        }
+        
+        button:hover {
+            background: rgba(0, 200, 200, 0.9); /* Less intense hover */
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 220, 220, 0.4);
+                }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .register-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .register-link a:hover {
+            text-shadow: 0 0 8px rgba(0, 247, 255, 0.5);
+        }
+        
+        .trading-animation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .stock-ticker {
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            opacity: 0.85; /* Perfect balance between visible and translucent */
+            animation: floatUp 15s linear infinite;
+            text-shadow: 0 0 12px currentColor; /* Stronger glow */
+            z-index: 0;
+            filter: drop-shadow(0 0 5px currentColor); /* Additional glow effect */
+            font-size: 16px !important; /* Slightly larger by default */
+        }
+        
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100px) rotate(5deg);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation" id="tradingAnimation"></div>
+    
+    <div class="login-container">
+        <div class="logo">
+            <h1>InsiderTracker</h1>
+            <p>Unlock market insights</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category != 'message' or not message.startswith('Please log in') %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Enter username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter password" required>
+            </div>
+            
+            <button type="submit">Sign In</button>
+        </form>
+
+        <div class="register-link">
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Register</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Create floating stock tickers animation
+        const stocks = ['AAPL', 'TSLA', 'AMZN', 'GOOGL', 'MSFT', 'NFLX', 'NVDA', 'BTC', 'ETH'];
+        const colors = ['#00f7ff', '#ff0066', '#ffcc00', '#00cc66', '#ffffff'];
+        
+        function createStockTicker() {
+            const ticker = document.createElement('div');
+            ticker.className = 'stock-ticker';
+            
+            // Random stock with occasional price values
+            const stock = stocks[Math.floor(Math.random() * stocks.length)];
+            const price = (Math.random() * 500 + 10).toFixed(2);
+            ticker.textContent = Math.random() > 0.3 ? stock : `${stock} $${price}`;
+            
+            // Positioning and styling
+            ticker.style.left = Math.random() * 100 + '%';
+            ticker.style.fontSize = (Math.random() * 6 + 14) + 'px'; // 14-20px range
+            ticker.style.color = colors[Math.floor(Math.random() * colors.length)];
+            ticker.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            ticker.style.animationDelay = (Math.random() * 3) + 's';
+            
+            // Add to DOM
+            document.getElementById('tradingAnimation').appendChild(ticker);
+            
+            // Clean up
+            setTimeout(() => ticker.remove(), 20000);
+        }
+
+        // More frequent generation with varied sizes
+        for (let i = 0; i < 20; i++) {
+            setTimeout(createStockTicker, i * 800);
+        }
+        setInterval(createStockTicker, 1200);
+        
+        // Form input animations
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                gsap.to(input, {
+                    duration: 0.3,
+                    boxShadow: '0 0 0 2px rgba(0, 247, 255, 0.3)',
+                    ease: 'power2.out'
+                });
+            });
+            
+            input.addEventListener('blur', () => {
+                gsap.to(input, {
+                    duration: 0.3,
+                    boxShadow: 'none',
+                    ease: 'power2.out'
+                });
+            });
+        });
+        
+        // Logo animation
+        gsap.from('.logo h1', {
+            duration: 1,
+            y: -30,
+            opacity: 0,
+            ease: 'back.out'
+        });
+        
+        gsap.from('.logo p', {
+            duration: 1,
+            y: 30,
+            opacity: 0,
+            delay: 0.3,
+            ease: 'back.out'
+        });
+    </script>
+</body>
+</html>

@@ -1,35 +1,301 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ticker }} Price Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #00f7ff;
+            --primary-dark: #00c4cc;
+            --danger: #ff0066;
+            --danger-dark: #cc0052;
+            --warning: #ffcc00;
+            --success: #00cc66;
+            --bg-dark: #0f172a;
+            --bg-darker: #0a101f;
+            --bg-card: #1e293b;
+            --text-light: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .chart-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+        
+        .chart-title {
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            text-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+        }
+        
+        .no-data-message {
+            text-align: center;
+            color: var(--danger);
+            font-size: 1.2rem;
+            padding: 40px;
+            background: rgba(255, 0, 102, 0.1);
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        #stockChart {
+            margin: 30px 0;
+            background: var(--bg-darker);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .chart-explanation {
+            background: var(--bg-darker);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .chart-explanation h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .chart-explanation p {
+            color: var(--text-muted);
+        }
+        
+        .stock-info {
+            background: var(--bg-darker);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .stock-info h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .stock-info p {
+            color: var(--text-muted);
+            margin: 8px 0;
+        }
+        
+        .price-info {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .current-price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-light);
+        }
+        
+        .price-change {
+            margin-left: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .positive {
+            background: rgba(0, 204, 102, 0.2);
+            color: #00cc66;
+        }
+        
+        .negative {
+            background: rgba(255, 0, 102, 0.2);
+            color: #ff0066;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: var(--primary);
+            color: var(--bg-dark);
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .back-link:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 247, 255, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .chart-container {
+                padding: 15px;
+            }
+            
+            .chart-title {
+                font-size: 1.5rem;
+            }
+            
+            #stockChart {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-container">
+        <h2 class="chart-title">{{ ticker }} Price History (1 Month)</h2>
 
-{% block title %}Trading Charts{% endblock %}
+        {% if not dates %}
+        <div class="no-data-message">
+            No historical data available for {{ ticker }}
+        </div>
+        {% endif %}
 
-{% block content %}
-<div class="chart-container">
-  <div class="chart-header">
-    <h3 class="chart-title">Insider Trading Activity</h3>
-    <div class="chart-actions">
-      <button class="chart-btn" id="btn-week">7 Days</button>
-      <button class="chart-btn" id="btn-month">30 Days</button>
-      <button class="chart-btn active" id="btn-all">All Time</button>
+        <canvas id="stockChart"></canvas>
+        
+        <div class="chart-explanation">
+            <h3>Understanding This Chart</h3>
+            <p>
+                The blue line shows the stock's closing price over the past month. 
+                Red markers indicate days with insider trading activity - larger markers 
+                represent more significant trades. Look for unusual price movements 
+                around these dates as they may indicate market-moving insider activity.
+            </p>
+        </div>
+        
+        <div class="stock-info">
+            <h3>{{ info.get('shortName', ticker) }} ({{ ticker }})</h3>
+            <p>Sector: {{ info.get('sector', 'N/A') }} | Industry: {{ info.get('industry', 'N/A') }}</p>
+            <div class="price-info">
+                <span class="current-price">${{ "%.2f"|format(info.get('currentPrice', 0)) }}</span>
+                <span class="price-change {{ 'positive' if info.get('regularMarketChangePercent', 0) >= 0 else 'negative' }}">
+                    {{ "%.2f"|format(info.get('regularMarketChangePercent', 0)) }}%
+                </span>
+            </div>
+            <p>52-Week Range: ${{ "%.2f"|format(info.get('fiftyTwoWeekLow', 0)) }} - ${{ "%.2f"|format(info.get('fiftyTwoWeekHigh', 0)) }}</p>
+        </div>
+        
+        <a href="{{ url_for('index') }}" class="back-link">← Back to Dashboard</a>
     </div>
-  </div>
-  <div class="chart-wrapper">
-    <canvas id="insiderChart"></canvas>
-  </div>
-</div>
 
-<div class="chart-container">
-  <div class="chart-header">
-    <h3 class="chart-title">Trade Volume vs. Price Impact</h3>
-  </div>
-  <div class="chart-wrapper">
-    <canvas id="impactChart"></canvas>
-  </div>
-</div>
+    <script>
+    const dates = JSON.parse('{{ dates | tojson | safe }}') || [];
+    const prices = JSON.parse('{{ prices | tojson | safe }}') || [];
+    const insiderDates = JSON.parse('{{ insider_dates | tojson | safe }}') || [];
 
-{% endblock %}
+    if (dates.length && prices.length) {
+        const ctx = document.getElementById('stockChart').getContext('2d');
 
-{% block scripts %}
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
-{% endblock %}
+        // Enhanced chart configuration
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates.map(date => date.slice(5)),
+                datasets: [{
+                    label: 'Price (USD)',
+                    data: prices,
+                    borderColor: 'rgba(0, 247, 255, 1)',
+                    backgroundColor: 'rgba(0, 247, 255, 0.1)',
+                    borderWidth: 3,
+                    pointRadius: dates.map(date => insiderDates.includes(date) ? 8 : 3),
+                    pointBackgroundColor: dates.map(date => 
+                        insiderDates.includes(date) ? 'rgba(255, 0, 102, 1)' : 'rgba(0, 247, 255, 1)'
+                    ),
+                    pointHoverRadius: 10,
+                    tension: 0.2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#e2e8f0',
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        titleColor: '#00f7ff',
+                        bodyColor: '#e2e8f0',
+                        borderColor: '#334155',
+                        borderWidth: 1,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `$${context.parsed.y.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(51, 65, 85, 0.5)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#94a3b8',
+                            callback: function(value) {
+                                return '$' + value.toFixed(2);
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(51, 65, 85, 0.5)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#94a3b8'
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                elements: {
+                    line: {
+                        cubicInterpolationMode: 'monotone'
+                    }
+                }
+            }
+        });
+    }
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #e6e6e6;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #16213e;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            background: #0f3460;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #e94560;
+            margin: 0;
+        }
+        .content {
+            padding: 20px;
+        }
+        .alert-card {
+            background: #0f3460;
+            border-left: 4px solid #e94560;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .alert-title {
+            color: #e94560;
+            margin-top: 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 15px;
+            background: #0f3460;
+            font-size: 12px;
+            color: #a1a1a1;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #e94560;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .details {
+            margin: 10px 0;
+        }
+        .details strong {
+            color: #e94560;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>🚨 Insider Trading Alert</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hello {{ user.username }},</p>
+            <p>We've detected new insider trading activity that matches your watchlist:</p>
+            
+            <div class="alert-card">
+                <h2 class="alert-title">{{ alert.ticker }} - {{ alert.issuer }}</h2>
+                
+                <div class="details">
+                    <p><strong>Insider:</strong> {{ alert.insider }}</p>
+                    <p><strong>Transaction:</strong> {{ alert.transaction }}</p>
+                    <p><strong>Date:</strong> {{ alert.date.strftime('%Y-%m-%d') }}</p>
+                    <p><strong>Severity:</strong> {{ alert.severity }}</p>
+                </div>
+                
+                <a href="{{ alert.link }}" class="button" target="_blank">View SEC Filing</a>
+            </div>
+            
+            <p>This alert was generated because the activity matches your watchlist criteria.</p>
+        </div>
+        
+        <div class="footer">
+            <p>You're receiving this email because you're subscribed to InsiderTracker alerts.</p>
+            <p>© 2023 InsiderTracker. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
